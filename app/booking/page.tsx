@@ -8,6 +8,11 @@ export default async function BookingPage() {
     .eq("status", "active")
     .order("name");
 
-  console.log("server", courtsData);
-  return <div>BookingPage</div>;
+  console.log("server", courtsData, courtsError);
+  return (
+    <div>
+      <h1>Booking Page</h1>
+      <p>{JSON.stringify(courtsData)}</p>
+    </div>
+  );
 }

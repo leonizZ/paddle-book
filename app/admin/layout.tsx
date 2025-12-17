@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Settings, Clock } from "lucide-react";
+import { LayoutDashboard, Calendar, Clock } from "lucide-react";
 
 export default function AdminLayout({
     children,
@@ -49,8 +49,8 @@ export default function AdminLayout({
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                            : "text-gray-400 hover:bg-slate-800 hover:text-white"
+                                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                        : "text-gray-400 hover:bg-slate-800 hover:text-white"
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5" />

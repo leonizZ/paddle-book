@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Calendar,
   Clock,
   CheckCircle2,
   XCircle,
@@ -10,7 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Court, TimeSlot, Booking } from "@/lib/types/booking";
+import type { Court, TimeSlot } from "@/lib/types/booking";
 
 export default function AdminAvailabilityPage() {
   const supabase = createClient();
@@ -49,8 +48,6 @@ export default function AdminAvailabilityPage() {
         if (courtsData && courtsData.length > 0) {
           setSelectedCourt(courtsData[0].id);
         }
-      } catch (error) {
-        // console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -202,11 +199,10 @@ export default function AdminAvailabilityPage() {
                         <button
                           key={court.id}
                           onClick={() => setSelectedCourt(court.id)}
-                          className={`p-3 rounded-lg border transition-all ${
-                            selectedCourt === court.id
-                              ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
-                              : "bg-slate-800 border-slate-700 text-gray-400 hover:border-gray-600"
-                          }`}
+                          className={`p-3 rounded-lg border transition-all ${selectedCourt === court.id
+                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                            : "bg-slate-800 border-slate-700 text-gray-400 hover:border-gray-600"
+                            }`}
                         >
                           {court.name}
                         </button>
@@ -287,32 +283,29 @@ export default function AdminAvailabilityPage() {
                         key={slot.id}
                         onClick={() => !isBooked && handleToggleSlot(slot.id)}
                         disabled={isBooked}
-                        className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group ${
-                          isBlocked
-                            ? "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
-                            : isBooked
+                        className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group ${isBlocked
+                          ? "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+                          : isBooked
                             ? "bg-blue-500/10 border-blue-500/30 opacity-75 cursor-not-allowed"
                             : "bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-500/5"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <Clock
-                            className={`w-5 h-5 ${
-                              isBlocked
-                                ? "text-red-400"
-                                : isBooked
+                            className={`w-5 h-5 ${isBlocked
+                              ? "text-red-400"
+                              : isBooked
                                 ? "text-blue-400"
                                 : "text-emerald-400"
-                            }`}
+                              }`}
                           />
                           <span
-                            className={`font-medium ${
-                              isBlocked
-                                ? "text-red-200"
-                                : isBooked
+                            className={`font-medium ${isBlocked
+                              ? "text-red-200"
+                              : isBooked
                                 ? "text-blue-200"
                                 : "text-white"
-                            }`}
+                              }`}
                           >
                             {label}
                           </span>

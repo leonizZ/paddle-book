@@ -200,7 +200,7 @@ export default function LandingPage() {
               </span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Have questions? We're here to help. Reach out to us anytime.
+              Have questions? Were here to help. Reach out to us anytime.
             </p>
           </div>
 

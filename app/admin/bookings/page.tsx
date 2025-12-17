@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Plus,
   X,
-  Clock,
   User,
   Phone,
   Mail,
@@ -180,7 +179,7 @@ export default function AdminBookingsPage() {
     try {
       // Get court hourly rate
       const court = courts.find((c) => c.id === formData.courtId);
-      const hourlyRate = (court as any)?.hourly_rate || 20.0;
+      const hourlyRate = court?.hourly_rate || 20.0;
 
       // Create booking in Supabase
       const { data: newBooking, error } = await supabase
@@ -356,11 +355,10 @@ export default function AdminBookingsPage() {
                       onClick={() =>
                         setFormData({ ...formData, courtId: court.id })
                       }
-                      className={`p-3 rounded-lg border transition-colors ${
-                        formData.courtId === court.id
-                          ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
-                          : "bg-slate-800 border-slate-700 text-gray-400"
-                      }`}
+                      className={`p-3 rounded-lg border transition-colors ${formData.courtId === court.id
+                        ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                        : "bg-slate-800 border-slate-700 text-gray-400"
+                        }`}
                     >
                       {court.name}
                     </button>
@@ -503,17 +501,16 @@ export default function AdminBookingsPage() {
                     Status
                   </label>
                   <div
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedBooking.status === "confirmed"
-                        ? "bg-green-500/20 text-green-400"
-                        : selectedBooking.status === "pending"
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedBooking.status === "confirmed"
+                      ? "bg-green-500/20 text-green-400"
+                      : selectedBooking.status === "pending"
                         ? "bg-yellow-500/20 text-yellow-400"
                         : selectedBooking.status === "cancelled"
-                        ? "bg-red-500/20 text-red-400"
-                        : selectedBooking.status === "completed"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
+                          ? "bg-red-500/20 text-red-400"
+                          : selectedBooking.status === "completed"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : "bg-gray-500/20 text-gray-400"
+                      }`}
                   >
                     {selectedBooking.status.charAt(0).toUpperCase() +
                       selectedBooking.status.slice(1)}
@@ -560,9 +557,9 @@ export default function AdminBookingsPage() {
                 <p className="text-white font-semibold">
                   {bookingDetails.timeSlot
                     ? `${bookingDetails.timeSlot.start_time.substring(
-                        0,
-                        5
-                      )} - ${bookingDetails.timeSlot.end_time.substring(0, 5)}`
+                      0,
+                      5
+                    )} - ${bookingDetails.timeSlot.end_time.substring(0, 5)}`
                     : "Loading..."}
                 </p>
               </div>

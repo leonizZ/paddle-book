@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Edit2, Save, X, Plus, Trash2, Loader2 } from "lucide-react";
+import { Edit2, Save, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Court } from "@/lib/types/booking";
@@ -24,8 +24,6 @@ export default function AdminCourtsPage() {
 
         if (error) throw error;
         setCourts(data || []);
-      } catch (error) {
-        console.error("Error fetching courts:", error);
       } finally {
         setLoading(false);
       }
@@ -41,7 +39,7 @@ export default function AdminCourtsPage() {
       tags: Array.isArray(court.tags) ? court.tags : [],
       hourly_rate: court.hourly_rate || 20.0,
     };
-    setEditingCourt(courtWithTags as any);
+    setEditingCourt(courtWithTags);
     setIsModalOpen(true);
   };
 
@@ -83,12 +81,12 @@ export default function AdminCourtsPage() {
       const input = e.currentTarget;
       const value = input.value.trim();
 
-      const currentTags = (editingCourt as any).tags || [];
+      const currentTags = editingCourt.tags || [];
       if (value && !currentTags.includes(value)) {
         setEditingCourt({
           ...editingCourt,
           tags: [...currentTags, value],
-        } as any);
+        });
         input.value = "";
       }
     }
@@ -96,11 +94,11 @@ export default function AdminCourtsPage() {
 
   const handleTagRemove = (tagToRemove: string) => {
     if (editingCourt) {
-      const currentTags = (editingCourt as any).tags || [];
+      const currentTags = editingCourt.tags || [];
       setEditingCourt({
         ...editingCourt,
         tags: currentTags.filter((tag: string) => tag !== tagToRemove),
-      } as any);
+      });
     }
   };
 
@@ -146,11 +144,10 @@ export default function AdminCourtsPage() {
                   />
                   <div className="absolute top-4 right-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        court.status === "active"
-                          ? "bg-emerald-500 text-white"
-                          : "bg-yellow-500 text-black"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${court.status === "active"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-yellow-500 text-black"
+                        }`}
                     >
                       {court.status.toUpperCase()}
                     </span>
@@ -293,7 +290,7 @@ export default function AdminCourtsPage() {
                   onChange={(e) =>
                     setEditingCourt({
                       ...editingCourt,
-                      status: e.target.value as any,
+                      status: e.target.value as Court["status"],
                     })
                   }
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none"
@@ -310,7 +307,7 @@ export default function AdminCourtsPage() {
                 </label>
                 <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {((editingCourt as any).tags || []).map((tag: string) => (
+                    {((editingCourt).tags || []).map((tag: string) => (
                       <span
                         key={tag}
                         className="flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-md border border-emerald-500/20"

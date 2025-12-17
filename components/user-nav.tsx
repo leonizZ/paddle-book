@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { User, LogOut, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { User as SupabaseUser } from "@supabase/supabase-js";
+
 interface UserNavProps {
-    initialUser?: any;
+    initialUser?: SupabaseUser | null;
 }
 
 export function UserNav({ initialUser }: UserNavProps) {
