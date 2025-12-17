@@ -17,6 +17,7 @@ export interface TimeSlot {
     start_time: string; // Format: "HH:MM:SS"
     end_time: string;   // Format: "HH:MM:SS"
     duration_minutes: number;
+    price_override?: number | null;
     created_at: string;
 }
 

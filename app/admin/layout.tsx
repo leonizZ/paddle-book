@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Clock } from "lucide-react";
+import { LayoutDashboard, Calendar, Clock, Users } from "lucide-react";
 
 export default function AdminLayout({
     children,
@@ -26,6 +26,11 @@ export default function AdminLayout({
             name: "Courts",
             href: "/admin/courts",
             icon: LayoutDashboard,
+        },
+        {
+            name: "Users",
+            href: "/admin/users",
+            icon: Users,
         },
     ];
 

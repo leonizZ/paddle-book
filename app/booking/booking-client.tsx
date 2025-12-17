@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, CheckCircle2, ChevronRight, Loader2, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Court, TimeSlot } from "@/lib/types/booking";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface BookingClientProps {
     courts: Court[];
@@ -15,14 +15,19 @@ interface BookingClientProps {
 
 export default function BookingClient({ courts, timeSlots }: BookingClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
 
-    const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
+    const selectedCourtId = searchParams.get('court');
+
+    const [selectedCourt, setSelectedCourt] = useState<Court | null>(
+        selectedCourtId ? courts.find(c => c.id === selectedCourtId) || null : null
+    );
     const [selectedDate, setSelectedDate] = useState<string>(
         new Date().toLocaleDateString('en-CA')
     );
     const [bookedSlotIds, setBookedSlotIds] = useState<Set<string>>(new Set());
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+    const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>([]);
     const [loading, setLoading] = useState(false);
     const [checkingAvailability, setCheckingAvailability] = useState(false);
 
@@ -77,34 +82,55 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
         fetchAvailability();
     }, [selectedCourt, selectedDate, supabase]);
 
+    const handleSlotClick = (slot: TimeSlot) => {
+        setSelectedTimeSlots(prev => {
+            const isSelected = prev.some(s => s.id === slot.id);
+            if (isSelected) {
+                return prev.filter(s => s.id !== slot.id);
+            } else {
+                return [...prev, slot];
+            }
+        });
+    };
+
+    const calculateTotal = () => {
+        if (!selectedCourt) return 0;
+        return selectedTimeSlots.reduce((total, slot) => {
+            const price = slot.price_override ?? ((selectedCourt.hourly_rate ?? 20) * (slot.duration_minutes / 60));
+            return total + price;
+        }, 0);
+    };
+
     const handleBook = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedCourt || !selectedTimeSlot || !formData.name || !formData.email) return;
+        if (!selectedCourt || selectedTimeSlots.length === 0 || !formData.name || !formData.email) return;
 
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
+            const bookingsToInsert = selectedTimeSlots.map(slot => ({
+                court_id: selectedCourt.id,
+                time_slot_id: slot.id,
+                booking_date: selectedDate,
+                customer_name: formData.name,
+                customer_email: formData.email,
+                customer_phone: formData.phone || null,
+                user_id: user?.id || null,
+                status: "pending",
+                total_amount: slot.price_override ?? ((selectedCourt.hourly_rate ?? 20) * (slot.duration_minutes / 60)),
+            }));
+
             const { data, error } = await supabase
                 .from("bookings")
-                .insert({
-                    court_id: selectedCourt.id,
-                    time_slot_id: selectedTimeSlot.id,
-                    booking_date: selectedDate,
-                    customer_name: formData.name,
-                    customer_email: formData.email,
-                    customer_phone: formData.phone || null,
-                    user_id: user?.id || null,
-                    status: "pending",
-                    total_amount: selectedCourt.hourly_rate || 0,
-                })
-                .select()
-                .single();
+                .insert(bookingsToInsert)
+                .select();
 
             if (error) throw error;
 
-            // Redirect to confirmation page with success flag
-            router.push(`/booking/confirm?success=true&bookingId=${data.id}`);
+            // Redirect to confirmation page with success flag (using first booking ID as reference)
+            const bookingId = data && data[0] ? data[0].id : "";
+            router.push(`/booking/confirm?success=true&bookingId=${bookingId}`);
 
         } catch (err) {
             console.error("Booking failed:", err);
@@ -142,13 +168,13 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                 Select a Court
                             </h2>
 
-                            <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 ">
                                 {courts.map((court) => (
                                     <div
                                         key={court.id}
                                         onClick={() => {
                                             setSelectedCourt(court);
-                                            setSelectedTimeSlot(null); // Reset time when court changes
+                                            setSelectedTimeSlots([]); // Reset time when court changes
                                         }}
                                         className={`cursor-pointer group relative overflow-hidden rounded-xl border transition-all duration-300 ${selectedCourt?.id === court.id
                                             ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-950/20"
@@ -202,14 +228,14 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                         min={new Date().toLocaleDateString('en-CA')}
                                         onChange={(e) => {
                                             setSelectedDate(e.target.value);
-                                            setSelectedTimeSlot(null);
+                                            setSelectedTimeSlots([]);
                                         }}
                                         className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-2">Available Slots</label>
+                                    <label className="block text-sm text-slate-400 mb-2">Available Slots (Multiple selection allowed)</label>
                                     {checkingAvailability ? (
                                         <div className="flex items-center justify-center py-8">
                                             <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
@@ -218,21 +244,27 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                             {sortedTimeSlots.map((slot) => {
                                                 const isBooked = bookedSlotIds.has(slot.id);
-                                                const isSelected = selectedTimeSlot?.id === slot.id;
+                                                const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+                                                const hasDiscount = slot.price_override && selectedCourt?.hourly_rate && slot.price_override < selectedCourt.hourly_rate;
 
                                                 return (
                                                     <button
                                                         key={slot.id}
                                                         disabled={isBooked}
-                                                        onClick={() => setSelectedTimeSlot(slot)}
-                                                        className={`px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 border ${isBooked
+                                                        onClick={() => handleSlotClick(slot)}
+                                                        className={`px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 border relative flex flex-col items-center justify-center gap-1 ${isBooked
                                                             ? "bg-slate-800/50 text-slate-600 border-transparent cursor-not-allowed decoration-slate-600 line-through"
                                                             : isSelected
                                                                 ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20"
                                                                 : "bg-slate-950 text-slate-300 border-slate-800 hover:border-emerald-500/50 hover:text-white"
                                                             }`}
                                                     >
-                                                        {slot.start_time.slice(0, 5)}
+                                                        <span>{slot.start_time.slice(0, 5)}</span>
+                                                        {slot.price_override && (
+                                                            <span className="text-[10px] bg-amber-500 text-black px-1 rounded-sm font-bold">
+                                                                ${slot.price_override}
+                                                            </span>
+                                                        )}
                                                     </button>
                                                 );
                                             })}
@@ -252,7 +284,7 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                             </h3>
 
                             <div className="space-y-4 mb-6 relative">
-                                {!selectedCourt && !selectedTimeSlot && (
+                                {!selectedCourt && selectedTimeSlots.length === 0 && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 backdrop-blur-[1px] z-10 rounded-lg">
                                         <p className="text-sm text-slate-500">Select court and time to proceed</p>
                                     </div>
@@ -266,15 +298,23 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                     <span className="text-slate-400 text-sm">Date</span>
                                     <span className="font-medium">{selectedDate ? format(new Date(selectedDate), "MMM dd, yyyy") : "-"}</span>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                                    <span className="text-slate-400 text-sm">Time</span>
-                                    <span className="font-medium">
-                                        {selectedTimeSlot ? `${selectedTimeSlot.start_time.slice(0, 5)} - ${selectedTimeSlot.end_time.slice(0, 5)}` : "-"}
-                                    </span>
+                                <div className="py-2 border-b border-slate-800">
+                                    <span className="text-slate-400 text-sm block mb-1">Items ({selectedTimeSlots.length})</span>
+                                    {selectedTimeSlots.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedTimeSlots.sort((a, b) => a.start_time.localeCompare(b.start_time)).map(slot => (
+                                                <span key={slot.id} className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">
+                                                    {slot.start_time.slice(0, 5)}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="font-medium text-slate-600">-</span>
+                                    )}
                                 </div>
                                 <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                                    <span className="text-slate-400 text-sm">Price</span>
-                                    <span className="font-medium text-emerald-400">${selectedCourt?.hourly_rate ?? 20}</span>
+                                    <span className="text-slate-400 text-sm">Total Price</span>
+                                    <span className="font-medium text-emerald-400 text-xl">${calculateTotal().toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -308,7 +348,7 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
 
                                 <button
                                     type="submit"
-                                    disabled={!selectedCourt || !selectedTimeSlot || loading}
+                                    disabled={!selectedCourt || selectedTimeSlots.length === 0 || loading}
                                     className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4"
                                 >
                                     {loading ? (
@@ -321,6 +361,7 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                     )}
                                 </button>
                             </form>
+
                         </div>
                     </div>
                 </div>
