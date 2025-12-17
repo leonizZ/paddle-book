@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Suspense } from "react";
 import { LandingNav } from "@/components/landing-nav";
 import { CourtsSection } from "@/components/sections/courts-section";

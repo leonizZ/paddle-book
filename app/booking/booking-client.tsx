@@ -245,7 +245,7 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
                                             {sortedTimeSlots.map((slot) => {
                                                 const isBooked = bookedSlotIds.has(slot.id);
                                                 const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
-                                                const hasDiscount = slot.price_override && selectedCourt?.hourly_rate && slot.price_override < selectedCourt.hourly_rate;
+                                                // const hasDiscount = slot.price_override && selectedCourt?.hourly_rate && slot.price_override < selectedCourt.hourly_rate;
 
                                                 return (
                                                     <button

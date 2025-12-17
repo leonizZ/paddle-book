@@ -21,8 +21,6 @@ export default async function BookingPage() {
   const timeSlots = timeSlotsResult.data || [];
 
 
-  console.log("court", courts);
-
   if (courtsResult.error) {
     console.error("Error fetching courts:", courtsResult.error);
   }
