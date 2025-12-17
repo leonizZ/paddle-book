@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Clock, Users, CheckCircle2, ChevronRight, Loader2, Image as ImageIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle2, ChevronRight, Loader2, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Court, TimeSlot } from "@/lib/types/booking";
 import { useRouter } from "next/navigation";
@@ -65,7 +65,7 @@ export default function BookingClient({ courts, timeSlots }: BookingClientProps)
 
                 if (error) throw error;
 
-                const bookedIds = new Set<string>(data.map((b: any) => b.time_slot_id));
+                const bookedIds = new Set<string>(data.map((b: { time_slot_id: string; }) => b.time_slot_id));
                 setBookedSlotIds(bookedIds);
             } catch (err) {
                 console.error("Error fetching availability:", err);
